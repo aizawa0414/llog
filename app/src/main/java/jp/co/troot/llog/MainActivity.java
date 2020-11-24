@@ -1,10 +1,15 @@
 package jp.co.troot.llog;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.view.Menu;
 import android.view.View;
@@ -30,10 +35,12 @@ import android.content.Intent;
 import android.widget.TextView.OnEditorActionListener;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
+import android.Manifest;
 import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.Date;
 import java.sql.ResultSet;
+import java.util.Locale;
 
 public class MainActivity extends MyActivity {
     private Calendar mCurrentDate;
@@ -41,26 +48,48 @@ public class MainActivity extends MyActivity {
     private int mGpsLoggerSeqNo;
     private static final int mPhotoViewSize = 229;
     private static final int mGpsViewSize = 229;
+    private static final String[] REQUEST_PERMISSIONS = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+    private static final int REQUEST_PERMISSIONS_CODE = 0;
+    private static final int REQUEST_CODE_PERMISSION = 0;
+    private static final int REQUEST_CODE_EDIT = 1;
+    private static final int REQUEST_CODE_PLACE = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Settings.System.canWrite(this)) {
-                // Do stuff here
-            } else {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+            if (!Settings.System.canWrite(this)) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
                 intent.setData(Uri.parse("package:" + getPackageName()));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivityForResult(intent, REQUEST_CODE_PERMISSION);
+                return;
+            }
+
+            ArrayList<String> requestPermissions = new ArrayList<>();
+            for (String requestPermission: REQUEST_PERMISSIONS) {
+                int permission = ContextCompat.checkSelfPermission(this, requestPermission);
+                if (permission != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions.add(requestPermission);
+                }
+            }
+            if (requestPermissions.size() != 0) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        requestPermissions.toArray(new String[0]),
+                        REQUEST_PERMISSIONS_CODE
+                );
                 return;
             }
         }
 
         try {
             Window window = getWindow();
-            window.setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
             window.requestFeature(Window.FEATURE_CUSTOM_TITLE);
             setContentView(R.layout.activity_main);
             window.setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title_main);
@@ -129,7 +158,8 @@ public class MainActivity extends MyActivity {
                             db.close();
 
                             InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                            imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                            if (imm != null)
+                                imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -148,7 +178,8 @@ public class MainActivity extends MyActivity {
                             db.close();
 
                             InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-                            imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                            if (imm != null)
+                                imm.hideSoftInputFromWindow(v.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -183,7 +214,7 @@ public class MainActivity extends MyActivity {
                 public void onClick(View v) {
                     Intent intent = new Intent(MainActivity.this, EditActivity.class);
                     intent.putExtra("Date", mCurrentDate);
-                    startActivityForResult(intent, 0);
+                    startActivityForResult(intent, REQUEST_CODE_EDIT);
                 }
             });
 
@@ -192,7 +223,7 @@ public class MainActivity extends MyActivity {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(MainActivity.this, PlaceActivity.class);
-                    startActivityForResult(intent, 0);
+                    startActivityForResult(intent, REQUEST_CODE_PLACE);
                 }
             });
 
@@ -234,10 +265,48 @@ public class MainActivity extends MyActivity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_PERMISSIONS_CODE) {
+            boolean allGrant = true;
+            for (int grantResult: grantResults) {
+                if (grantResult != PackageManager.PERMISSION_GRANTED) {
+                    allGrant = false;
+                    break;
+                }
+            }
+            if (allGrant)
+                reload();
+            else
+                moveTaskToBack(false);
+        }
+    }
+
+    private void reload() {
+        Intent intent = getIntent();
+        overridePendingTransition(0, 0);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        finish();
+
+        overridePendingTransition(0, 0);
+        startActivity(intent);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
-            if (resultCode != 0)
-                ChangeCalendar(true);
+            switch (requestCode) {
+                case REQUEST_CODE_PERMISSION:
+                    reload();
+                    break;
+                case REQUEST_CODE_EDIT:
+                case REQUEST_CODE_PLACE:
+                    if (resultCode != 0)
+                        ChangeCalendar(true);
+                    break;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -276,21 +345,29 @@ public class MainActivity extends MyActivity {
 
     private void dispMonthList(Database db) throws Exception {
         ArrayAdapter<ListItem> adapter = new ArrayAdapter<ListItem>(this, R.layout.row_date) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
+            @Override @NonNull
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
                 TextView view = (TextView)super.getView(position, convertView, parent);
                 ListItem listItem = getItem(position);
-                view.setText(Html.fromHtml(listItem.mDispText));
-                switch (listItem.mCalendar.get(Calendar.DAY_OF_WEEK)) {
-                    case 1:
-                        view.setTextColor(Color.RED);
-                        break;
-                    case 7:
-                        view.setTextColor(Color.BLUE);
-                        break;
-                    default:
-                        view.setTextColor(Color.BLACK);
-                        break;
+                if (listItem != null) {
+                    view.setText(Html.fromHtml(listItem.mDispText));
+                    switch (listItem.mCalendar.get(Calendar.DAY_OF_WEEK)) {
+                        case 1:
+                            view.setTextColor(Color.RED);
+                            break;
+                        case 7:
+                            view.setTextColor(Color.BLUE);
+                            break;
+                        default:
+                            view.setTextColor(Color.BLACK);
+                            break;
+                    }
+                }
+                int height = parent.getHeight();
+                if (height != 0) {
+                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                    params.height = height / 31 - 2;
+                    view.setLayoutParams(params);
                 }
                 return view;
             }
@@ -302,7 +379,7 @@ public class MainActivity extends MyActivity {
             Calendar date = (Calendar)mCurrentDate.clone();
             date.set(Calendar.DAY_OF_MONTH, 1);
 
-            sql = String.format("SELECT cl_date,"
+            sql = String.format(Locale.US, "SELECT cl_date,"
                     + "(SELECT COUNT(*) FROM t_comment WHERE cm_date=cl_date) AS cm_count,"
                     + "(SELECT COUNT(*) FROM t_event WHERE ev_date=cl_date) AS ev_count,"
                     + "(SELECT COUNT(*) FROM t_train WHERE tr_date=cl_date) AS tr_count,"
@@ -317,18 +394,18 @@ public class MainActivity extends MyActivity {
             String[] searchTemp = searchEqu.split(" ");
             String[] searchTemp2 = new String[searchTemp.length];
             for (int i = 0; i < searchTemp.length; i++) {
-                searchTemp2[i] = String.format("\t ILIKE '%%%s%%'", searchTemp[i]);
+                searchTemp2[i] = String.format(Locale.US, "\t ILIKE '%%%s%%'", searchTemp[i]);
             }
             String searchLike = MyUtils.join(searchTemp2, " AND ");
             String commentLike = searchLike.replaceAll("\t", "cm_comment");
             String photoLike1 = searchLike.replaceAll("\t", "ph_folder_name");
             String photoLike2 = searchLike.replaceAll("\t", "ph_comment");
-            String photoLike = String.format("%s OR %s", photoLike1, photoLike2);
+            String photoLike = String.format(Locale.US, "%s OR %s", photoLike1, photoLike2);
             String keitaiGpsLike1 = searchLike.replaceAll("\t", "kg_address");
             String keitaiGpsLike2 = searchLike.replaceAll("\t", "kg_comment");
-            String keitaiGpsLike = String.format("%s OR %s", keitaiGpsLike1, keitaiGpsLike2);
+            String keitaiGpsLike = String.format(Locale.US, "%s OR %s", keitaiGpsLike1, keitaiGpsLike2);
             String gpsLoggerLike = searchLike.replaceAll("\t", "gc_comment");
-            sql = String.format("SELECT s1_date AS cl_date,"
+            sql = String.format(Locale.US, "SELECT s1_date AS cl_date,"
                     + "(SELECT COUNT(*) FROM t_comment WHERE cm_date=s1_date) AS cm_count,"
                     + "(SELECT COUNT(*) FROM t_event WHERE ev_date=s1_date) AS ev_count,"
                     + "(SELECT COUNT(*) FROM t_train WHERE tr_date=s1_date) AS tr_count,"
@@ -359,7 +436,7 @@ public class MainActivity extends MyActivity {
                 pos = adapter.getCount();
 
             ListItem listItem = new ListItem();
-            listItem.mDispText = String.format("%04d/%02d/%02d（%s）%s %s %s %s %s %s %s",
+            listItem.mDispText = String.format(Locale.US, "%04d/%02d/%02d（%s）%s %s %s %s %s %s %s",
                     cl.get(Calendar.YEAR),
                     cl.get(Calendar.MONTH) + 1,
                     cl.get(Calendar.DAY_OF_MONTH),
@@ -392,9 +469,9 @@ public class MainActivity extends MyActivity {
         }
 
         if (setColor)
-            return String.format("<b>%d</b>", count);
+            return String.format(Locale.US, "<b>%d</b>", count);
         else
-            return String.format("%d", count);
+            return String.format(Locale.US, "%d", count);
     }
 
     private Calendar getCalendar() {
@@ -417,14 +494,14 @@ public class MainActivity extends MyActivity {
         ArrayAdapter<String> stringAdapter;
         ArrayAdapter<KeitaiGpsItem> keitaiGpsAdapter;
 
-        sql = String.format("SELECT cm_comment FROM t_comment WHERE cm_date=%s ORDER BY cm_seq_no", date);
+        sql = String.format(Locale.US, "SELECT cm_comment FROM t_comment WHERE cm_date=%s ORDER BY cm_seq_no", date);
         rs = db.query(sql);
         textView = (TextView)findViewById(R.id.textViewComment);
         textView.setText(rs.next() ? rs.getString("cm_comment") : "");
         scrollView = (ScrollView)findViewById(R.id.scrollViewComment);
         scrollView.setScrollY(0);
 
-        sql = String.format("SELECT em_text FROM t_event JOIN m_event ON ev_event_id=em_event_id WHERE ev_date=%s ORDER BY ev_seq_no", date);
+        sql = String.format(Locale.US, "SELECT em_text FROM t_event JOIN m_event ON ev_event_id=em_event_id WHERE ev_date=%s ORDER BY ev_seq_no", date);
         rs = db.query(sql);
         stringAdapter = new ArrayAdapter<String>(this, R.layout.row_item) {
             @Override
@@ -438,7 +515,7 @@ public class MainActivity extends MyActivity {
         listView = (ListView)findViewById(R.id.listViewEvent);
         listView.setAdapter(stringAdapter);
 
-        sql = String.format("SELECT tr_from_line,tr_from_station,tr_to_line,tr_to_station FROM t_train WHERE tr_date=%s ORDER BY tr_seq_no", date);
+        sql = String.format(Locale.US, "SELECT tr_from_line,tr_from_station,tr_to_line,tr_to_station FROM t_train WHERE tr_date=%s ORDER BY tr_seq_no", date);
         rs = db.query(sql);
         stringAdapter = new ArrayAdapter<String>(this, R.layout.row_item) {
             @Override
@@ -452,34 +529,35 @@ public class MainActivity extends MyActivity {
             String toLine = rs.getString("tr_to_line");
             String toStation = rs.getString("tr_to_station");
             if (fromLine.equals(toLine))
-                stringAdapter.add(String.format("%s %s → %s", fromLine, fromStation, toStation));
+                stringAdapter.add(String.format(Locale.US, "%s %s → %s", fromLine, fromStation, toStation));
             else
-                stringAdapter.add(String.format("%s %s → %s %s", fromLine, fromStation, toLine, toStation));
+                stringAdapter.add(String.format(Locale.US, "%s %s → %s %s", fromLine, fromStation, toLine, toStation));
         }
         listView = (ListView)findViewById(R.id.listViewTrain);
         listView.setAdapter(stringAdapter);
 
-        sql = String.format("SELECT kg_seq_no,kg_datetime,COALESCE(kg_address,'不明') AS kg_address FROM t_keitai_gps WHERE kg_date=%s ORDER BY kg_seq_no", date);
+        sql = String.format(Locale.US, "SELECT kg_seq_no,kg_datetime,COALESCE(kg_address,'不明') AS kg_address FROM t_keitai_gps WHERE kg_date=%s ORDER BY kg_seq_no", date);
         rs = db.query(sql);
         keitaiGpsAdapter = new ArrayAdapter<KeitaiGpsItem>(this, R.layout.row_item) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
+            @Override @NonNull
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
                 TextView view = (TextView)super.getView(position, convertView, parent);
                 KeitaiGpsItem keitaiGpsItem = getItem(position);
-                view.setText(keitaiGpsItem.mDispText);
+                if (keitaiGpsItem != null)
+                    view.setText(keitaiGpsItem.mDispText);
                 return view;
             }
         };
         while (rs.next()) {
             KeitaiGpsItem keitaiGpsItem = new KeitaiGpsItem();
-            keitaiGpsItem.mDispText = String.format("%s %s", rs.getString("kg_datetime").subSequence(11, 19), rs.getString("kg_address"));
+            keitaiGpsItem.mDispText = String.format(Locale.US, "%s %s", rs.getString("kg_datetime").subSequence(11, 19), rs.getString("kg_address"));
             keitaiGpsItem.mSeqNo = rs.getInt("kg_seq_no");
             keitaiGpsAdapter.add(keitaiGpsItem);
         }
         listView = (ListView)findViewById(R.id.listViewKeitaiGps);
         listView.setAdapter(keitaiGpsAdapter);
 
-        sql = String.format("SELECT wk_step,wk_calorie,wk_fat,wk_distance,wk_time,wk_speed FROM t_walking WHERE wk_date=%s", date);
+        sql = String.format(Locale.US, "SELECT wk_step,wk_calorie,wk_fat,wk_distance,wk_time,wk_speed FROM t_walking WHERE wk_date=%s", date);
         rs = db.query(sql);
         if (rs.next()) {
             textView = (TextView)findViewById(R.id.textViewWalkingStep);
@@ -508,7 +586,7 @@ public class MainActivity extends MyActivity {
         }
 
         ImageView photoView = (ImageView)findViewById(R.id.imageViewPhoto);
-        sql = String.format("SELECT ph_date,ph_folder_name,ph_file_name FROM t_photo WHERE ph_date=%s ORDER BY ph_datetime LIMIT 1", date);
+        sql = String.format(Locale.US, "SELECT ph_date,ph_folder_name,ph_file_name FROM t_photo WHERE ph_date=%s ORDER BY ph_datetime LIMIT 1", date);
         rs = db.query(sql);
         if (rs.next()) {
             Bitmap bitmap = MyUtils.getBitmapFromServer(rs.getDate("ph_date"), rs.getString("ph_folder_name"), rs.getString("ph_file_name"), mPhotoViewSize);
@@ -518,11 +596,11 @@ public class MainActivity extends MyActivity {
             textView = (TextView)findViewById(R.id.textMapTitle);
             textView.setText(rs.getString("ph_folder_name"));
 
-            sql = String.format("SELECT COUNT(*) FROM t_photo WHERE ph_date=%s", date);
+            sql = String.format(Locale.US, "SELECT COUNT(*) FROM t_photo WHERE ph_date=%s", date);
             rs = db.query(sql);
             rs.next();
             textView = (TextView)findViewById(R.id.textViewPhotoNum);
-            textView.setText(String.format("%d枚", rs.getInt(1)));
+            textView.setText(String.format(Locale.US, "%d枚", rs.getInt(1)));
         } else {
             photoView.setImageBitmap(null);
             photoView.setClickable(false);
@@ -535,12 +613,15 @@ public class MainActivity extends MyActivity {
         }
 
         ImageView gpsView = (ImageView)findViewById(R.id.imageViewGps);
-        sql = String.format("SELECT gl_seq_no,gl_point_data,gl_point_num FROM t_gps_logger WHERE gl_date=%s ORDER BY gl_seq_no LIMIT 1", date);
+        sql = String.format(Locale.US, "SELECT gl_seq_no,gl_point_data,gl_point_num FROM t_gps_logger WHERE gl_date=%s ORDER BY gl_seq_no LIMIT 1", date);
         rs = db.query(sql);
         if (rs.next()) {
+            ApplicationInfo appliInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+            String key = appliInfo.metaData.getString("com.google.android.geo.API_KEY");
+
             mGpsLoggerSeqNo = rs.getInt("gl_seq_no");
             int pointNum = rs.getInt("gl_point_num");
-            String url = String.format("http://maps.googleapis.com/maps/api/staticmap?size=%dx%d&sensor=false&language=ja&path=color:0xff00aaaa|weight:4", mGpsViewSize, mGpsViewSize);
+            String url = String.format(Locale.US, "http://maps.googleapis.com/maps/api/staticmap?key=%s&size=%dx%d&sensor=false&language=ja&path=color:0xff00aaaa|weight:4", key, mGpsViewSize, mGpsViewSize);
 
             int step;
             if (pointNum <= 50) {
@@ -551,9 +632,11 @@ public class MainActivity extends MyActivity {
 
             ArrayList<GpsData> gpsDataList = GpsData.getGpsData(rs.getBytes("gl_point_data"), step);
 
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < gpsDataList.size(); i++) {
-                url += String.format("|%f,%f", gpsDataList.get(i).mPos.latitude, gpsDataList.get(i).mPos.longitude);
+                sb.append(String.format(Locale.US, "|%f,%f", gpsDataList.get(i).mPos.latitude, gpsDataList.get(i).mPos.longitude));
             }
+            url += sb.toString();
 
             Bitmap bitmap = MyUtils.getBitmapFromURL(url);
             gpsView.setImageBitmap(bitmap);
@@ -572,12 +655,12 @@ public class MainActivity extends MyActivity {
     }
 
     private class ListItem {
-        public String mDispText;
-        public Calendar mCalendar;
+        String mDispText;
+        Calendar mCalendar;
     }
 
     private class KeitaiGpsItem {
-        public String mDispText;
+        String mDispText;
         int mSeqNo;
     }
 }

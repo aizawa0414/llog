@@ -1,11 +1,11 @@
 package jp.co.troot.llog;
 
 import android.content.Context;
+import android.support.v7.widget.AppCompatTextView;
 import android.util.AttributeSet;
 import android.widget.Checkable;
-import android.widget.TextView;
 
-public class DateTextView extends TextView implements Checkable {
+public class DateTextView extends AppCompatTextView implements Checkable {
 	private boolean mChecked;
 	private static final int[] CHECKED_STATE_SET = { android.R.attr.state_checked };
 

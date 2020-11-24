@@ -1,6 +1,7 @@
 package jp.co.troot.llog;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.View.OnClickListener;
@@ -16,6 +17,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import java.sql.ResultSet;
 import java.util.Calendar;
+import java.util.Locale;
 
 public class EditActivity extends MyActivity {
     Calendar mDate;
@@ -27,7 +29,6 @@ public class EditActivity extends MyActivity {
 
         try {
             Window window = getWindow();
-            window.setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
             window.requestFeature(Window.FEATURE_CUSTOM_TITLE);
             setContentView(R.layout.activity_edit);
             window.setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.title_edit);
@@ -51,7 +52,7 @@ public class EditActivity extends MyActivity {
                         EventItem eventItem = (EventItem)parent.getItemAtPosition(position);
 
                         Database db = new Database();
-                        String sql = String.format("INSERT INTO t_event (ev_date,ev_event_id) VALUES (%s,%d)", Database.sqlDate(mDate.getTime()), eventItem.mEventId);
+                        String sql = String.format(Locale.US, "INSERT INTO t_event (ev_date,ev_event_id) VALUES (%s,%d)", Database.sqlDate(mDate.getTime()), eventItem.mEventId);
                         db.exec(sql);
 
                         displayData(db);
@@ -70,7 +71,7 @@ public class EditActivity extends MyActivity {
                         EventItem eventItem = (EventItem)parent.getItemAtPosition(position);
 
                         Database db = new Database();
-                        String sql = String.format("DELETE FROM t_event WHERE ev_date=%s AND ev_event_id=%d", Database.sqlDate(mDate.getTime()), eventItem.mEventId);
+                        String sql = String.format(Locale.US, "DELETE FROM t_event WHERE ev_date=%s AND ev_event_id=%d", Database.sqlDate(mDate.getTime()), eventItem.mEventId);
                         db.exec(sql);
 
                         displayData(db);
@@ -97,7 +98,7 @@ public class EditActivity extends MyActivity {
                                 editTextTrainStationFrom.getText().length() != 0 &&
                                 editTextTrainLineTo.getText().length() != 0 &&
                                 editTextTrainStationTo.getText().length() != 0) {
-                            String sql = String.format("INSERT INTO t_train (tr_date,tr_from_line,tr_from_station,tr_to_line,tr_to_station) VALUES (%s,%s,%s,%s,%s)",
+                            String sql = String.format(Locale.US, "INSERT INTO t_train (tr_date,tr_from_line,tr_from_station,tr_to_line,tr_to_station) VALUES (%s,%s,%s,%s,%s)",
                                     Database.sqlDate(mDate.getTime()),
                                     Database.sqlString(editTextTrainLineFrom.getText().toString()),
                                     Database.sqlString(editTextTrainStationFrom.getText().toString()),
@@ -125,7 +126,7 @@ public class EditActivity extends MyActivity {
                         int pos = listView.getCheckedItemPosition();
                         if (pos != -1) {
                             TrainItem trainItem = (TrainItem)listView.getItemAtPosition(pos);
-                            String sql = String.format("DELETE FROM t_train WHERE tr_seq_no=%d", trainItem.mSeqNo);
+                            String sql = String.format(Locale.US, "DELETE FROM t_train WHERE tr_seq_no=%d", trainItem.mSeqNo);
                             db.exec(sql);
 
                             displayData(db);
@@ -154,20 +155,20 @@ public class EditActivity extends MyActivity {
             String comment = editTextComment.getText().toString().replace("\r", "").replace("\n", "\r\n");
             if (!comment.equals(mOrgComment)) {
                 Database db = new Database();
-                String sql = String.format("SELECT cm_seq_no FROM t_comment WHERE cm_date=%s ORDER BY cm_seq_no", Database.sqlDate(mDate.getTime()));
+                String sql = String.format(Locale.US, "SELECT cm_seq_no FROM t_comment WHERE cm_date=%s ORDER BY cm_seq_no", Database.sqlDate(mDate.getTime()));
                 ResultSet rs = db.query(sql);
                 if (rs.next()) {
                     int seqNo = rs.getInt("cm_seq_no");
                     if (comment.length() != 0) {
-                        sql = String.format("UPDATE t_comment SET cm_comment=%s WHERE cm_seq_no=%d", Database.sqlString(comment), seqNo);
+                        sql = String.format(Locale.US, "UPDATE t_comment SET cm_comment=%s WHERE cm_seq_no=%d", Database.sqlString(comment), seqNo);
                         db.exec(sql);
                     } else {
-                        sql = String.format("DELETE FROM t_comment WHERE cm_seq_no=%d", seqNo);
+                        sql = String.format(Locale.US, "DELETE FROM t_comment WHERE cm_seq_no=%d", seqNo);
                         db.exec(sql);
                     }
                 } else {
                     if (comment.length() != 0) {
-                        sql = String.format("INSERT INTO t_comment (cm_date,cm_comment) VALUES (%s,%s)", Database.sqlDate(mDate.getTime()), Database.sqlString(comment));
+                        sql = String.format(Locale.US, "INSERT INTO t_comment (cm_date,cm_comment) VALUES (%s,%s)", Database.sqlDate(mDate.getTime()), Database.sqlString(comment));
                         db.exec(sql);
                     }
                 }
@@ -185,7 +186,7 @@ public class EditActivity extends MyActivity {
         EventAdapter eventAdapter2 = new EventAdapter(this, R.layout.row_edit);
         TrainAdapter trainAdapter = new TrainAdapter(this, R.layout.row_edit);
 
-        String sql = String.format("SELECT cm_comment FROM t_comment WHERE cm_date=%s ORDER BY cm_seq_no", Database.sqlDate(mDate.getTime()));
+        String sql = String.format(Locale.US, "SELECT cm_comment FROM t_comment WHERE cm_date=%s ORDER BY cm_seq_no", Database.sqlDate(mDate.getTime()));
         ResultSet rs = db.query(sql);
         if (rs.next()) {
             EditText editTextComment = (EditText)findViewById(R.id.editTextComment);
@@ -194,7 +195,7 @@ public class EditActivity extends MyActivity {
         } else
             mOrgComment = "";
 
-        sql = String.format("SELECT em_event_id,em_text,ev_event_id FROM m_event LEFT JOIN t_event ON ev_event_id=em_event_id AND ev_date=%s ORDER BY em_event_id", Database.sqlDate(mDate.getTime()));
+        sql = String.format(Locale.US, "SELECT em_event_id,em_text,ev_event_id FROM m_event LEFT JOIN t_event ON ev_event_id=em_event_id AND ev_date=%s ORDER BY em_event_id", Database.sqlDate(mDate.getTime()));
         rs = db.query(sql);
         while (rs.next()) {
             EventItem eventItem = new EventItem();
@@ -212,12 +213,12 @@ public class EditActivity extends MyActivity {
         ListView listViewEvent2 = (ListView)findViewById(R.id.listViewEvent2);
         listViewEvent2.setAdapter(eventAdapter2);
 
-        sql = String.format("SELECT tr_seq_no,tr_from_line,tr_from_station,tr_to_line,tr_to_station FROM t_train WHERE tr_date=%s ORDER BY tr_seq_no", Database.sqlDate(mDate.getTime()));
+        sql = String.format(Locale.US, "SELECT tr_seq_no,tr_from_line,tr_from_station,tr_to_line,tr_to_station FROM t_train WHERE tr_date=%s ORDER BY tr_seq_no", Database.sqlDate(mDate.getTime()));
         rs = db.query(sql);
         while (rs.next()) {
             TrainItem trainItem = new TrainItem();
             trainItem.mSeqNo = rs.getInt("tr_seq_no");
-            trainItem.mText = String.format("%s %s → %s %s", rs.getString("tr_from_line"), rs.getString("tr_from_station"), rs.getString("tr_to_line"), rs.getString("tr_to_station"));
+            trainItem.mText = String.format(Locale.US, "%s %s → %s %s", rs.getString("tr_from_line"), rs.getString("tr_from_station"), rs.getString("tr_to_line"), rs.getString("tr_to_station"));
             trainAdapter.add(trainItem);
         }
         ListView listViewTrain = (ListView)findViewById(R.id.listViewTrain);
@@ -225,39 +226,41 @@ public class EditActivity extends MyActivity {
     }
 
     private class EventItem {
-        public int mEventId;
-        public String mText;
+        int mEventId;
+        String mText;
     }
 
     private class EventAdapter extends ArrayAdapter<EventItem> {
-        public EventAdapter(Context context, int textViewResourceId) {
+        EventAdapter(Context context, int textViewResourceId) {
             super(context, textViewResourceId);
         }
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @Override @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             TextView view = (TextView)super.getView(position, convertView, parent);
             EventItem eventItem = getItem(position);
-            view.setText(eventItem.mText);
+            if (eventItem != null)
+                view.setText(eventItem.mText);
             return view;
         }
     }
 
     private class TrainItem {
-        public int mSeqNo;
-        public String mText;
+        int mSeqNo;
+        String mText;
     }
 
     private class TrainAdapter extends ArrayAdapter<TrainItem> {
-        public TrainAdapter(Context context, int textViewResourceId) {
+        TrainAdapter(Context context, int textViewResourceId) {
             super(context, textViewResourceId);
         }
 
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        @Override @NonNull
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             TextView view = (TextView)super.getView(position, convertView, parent);
             TrainItem trainItem = getItem(position);
-            view.setText(trainItem.mText);
+            if (trainItem != null)
+                view.setText(trainItem.mText);
             return view;
         }
     }

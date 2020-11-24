@@ -7,6 +7,7 @@ import android.widget.EditText;
 
 import java.sql.Array;
 import java.sql.ResultSet;
+import java.util.Locale;
 
 /**
  * Created by aizawa on 2015/01/07.
@@ -26,7 +27,7 @@ public class PlaceEditActivity extends MyActivity {
 
             Database db = new Database();
 
-            String sql = String.format("SELECT pl_seq_no, pl_name, pl_yomi, pl_address, pl_comment, pl_add_info FROM t_place WHERE pl_seq_no = %d", mSeqNo);
+            String sql = String.format(Locale.US, "SELECT pl_seq_no, pl_name, pl_yomi, pl_address, pl_comment, pl_add_info FROM t_place WHERE pl_seq_no = %d", mSeqNo);
             ResultSet rs = db.query(sql);
             if (rs.next()) {
                 EditText editTextName = (EditText)findViewById(R.id.editTextName);
@@ -79,7 +80,7 @@ public class PlaceEditActivity extends MyActivity {
             addInfo[1] = checkBoxTrash.isChecked() ? "t" : "f";
             addInfo[2] = checkBoxToilet.isChecked() ? "t" : "f";
 
-            String sql = String.format(
+            String sql = String.format(Locale.US,
                     "UPDATE t_place SET pl_name = %s, pl_yomi = %s, pl_address = %s, pl_comment = %s, pl_add_info = %s WHERE pl_seq_no = %d",
                     Database.sqlString(editTextName.getText().toString()),
                     Database.sqlString(editTextYomi.getText().toString()),

@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/LLOG.iml" filepath="$PROJECT_DIR$/LLOG.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/metadata-extractor/metadata-extractor.iml" filepath="$PROJECT_DIR$/metadata-extractor/metadata-extractor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/AndroidLLOG.iml" filepath="$PROJECT_DIR$/.idea/modules/AndroidLLOG.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/AndroidLLOG.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/AndroidLLOG.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/metadata-extractor/AndroidLLOG.metadata-extractor.iml" filepath="$PROJECT_DIR$/.idea/modules/metadata-extractor/AndroidLLOG.metadata-extractor.iml" />
     </modules>
   </component>
 </project>

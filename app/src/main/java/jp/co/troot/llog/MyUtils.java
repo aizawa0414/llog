@@ -15,9 +15,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
-public class MyUtils {
-	public static String join(String[] arry, String with) {
+class MyUtils {
+	static String join(String[] arry, String with) {
         StringBuilder buf = new StringBuilder();
 		for (String s: arry) {
 			if (buf.length() > 0) {
@@ -28,34 +29,34 @@ public class MyUtils {
 		 return buf.toString();
 	}
 
-	public static Bitmap getBitmapFromServer(Date date, String folderName, String fileName) throws Exception {
+	static Bitmap getBitmapFromServer(Date date, String folderName, String fileName) throws Exception {
 		return getBitmapFromURL(getServerURL(date, folderName, fileName));
 	}
 
-	public static Bitmap getBitmapFromServer(Date date, String folderName, String fileName, int maxSize) throws Exception {
+	static Bitmap getBitmapFromServer(Date date, String folderName, String fileName, int maxSize) throws Exception {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
-		String url = String.format("http://inet.troot.co.jp/llog/ph_img.php?year=%d&folder=%s&file=%s&m=%d&c=1", cal.get(Calendar.YEAR), URLEncoder.encode(folderName, "UTF-8"), URLEncoder.encode(fileName, "UTF-8"), maxSize);
+		String url = String.format(Locale.US,"http://inet.troot.co.jp/llog/ph_img.php?year=%d&folder=%s&file=%s&m=%d&c=1", cal.get(Calendar.YEAR), URLEncoder.encode(folderName, "UTF-8"), URLEncoder.encode(fileName, "UTF-8"), maxSize);
 		return getBitmapFromURL(url);
 	}
 
-	public static Bitmap getBitmapFromServer(int seqNo, int maxSize) throws Exception {
-		String url = String.format("http://inet.troot.co.jp/llog/ph_img.php?seq_no=%d&m=%d&c=1", seqNo, maxSize);
+	static Bitmap getBitmapFromServer(int seqNo, int maxSize) throws Exception {
+		String url = String.format(Locale.US,"http://inet.troot.co.jp/llog/ph_img.php?seq_no=%d&m=%d&c=1", seqNo, maxSize);
 		return getBitmapFromURL(url);
 	}
 
-	public static InputStream getPhotoStreamFromServer(Date date, String folderName, String fileName) throws Exception {
+	static InputStream getPhotoStreamFromServer(Date date, String folderName, String fileName) throws Exception {
 		return getPhotoStreamFromURL(getServerURL(date, folderName, fileName));
 	}
 
-	public static Bitmap getBitmapFromURL(String src) throws Exception {
+	static Bitmap getBitmapFromURL(String src) throws Exception {
 		return BitmapFactory.decodeStream(getPhotoStreamFromURL(src));
 	}
 
 	private static String getServerURL(Date date, String folderName, String fileName) throws Exception {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
-		return String.format("http://inet.troot.co.jp/photo/%d/%s/%s", cal.get(Calendar.YEAR), URLEncoder.encode(folderName, "UTF-8"), URLEncoder.encode(fileName, "UTF-8"));
+		return String.format(Locale.US, "http://inet.troot.co.jp/photo/%d/%s/%s", cal.get(Calendar.YEAR), URLEncoder.encode(folderName, "UTF-8"), URLEncoder.encode(fileName, "UTF-8"));
 	}
 
 	private static InputStream getPhotoStreamFromURL(String src) throws Exception {
@@ -66,7 +67,7 @@ public class MyUtils {
 		return connection.getInputStream();
 	}
 
-	public static String requestJSON(String url, String requestData) throws Exception {
+	static String requestJSON(String url, String requestData) throws Exception {
 		URL object = new URL(url);
 
 		HttpURLConnection con = (HttpURLConnection)object.openConnection();

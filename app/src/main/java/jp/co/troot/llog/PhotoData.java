@@ -2,10 +2,10 @@ package jp.co.troot.llog;
 
 import java.util.Date;
 
-public class PhotoData {
-	public int mSeqNo;
-	public Date mDate;
-	public String mFolderName;
-	public String mFileName;
-	public boolean mLocationFlag;
+class PhotoData {
+	int mSeqNo;
+	Date mDate;
+	String mFolderName;
+	String mFileName;
+	boolean mLocationFlag;
 }

@@ -12,7 +12,7 @@ public class PhotoAdapter extends PagerAdapter {
     private Context mContext;
     private ArrayList<PhotoData> mPhotoList;
 
-    public PhotoAdapter(Context context, ArrayList<PhotoData> photoList) {
+    PhotoAdapter(Context context, ArrayList<PhotoData> photoList) {
         mContext = context;
         mPhotoList = photoList;
     }
@@ -52,7 +52,7 @@ public class PhotoAdapter extends PagerAdapter {
     @Override
     public boolean isViewFromObject(View view, Object object) {
         // Object 内に View が存在するか判定する
-        return view == (ImageView)object;
+        return view == object;
     }
 
 }

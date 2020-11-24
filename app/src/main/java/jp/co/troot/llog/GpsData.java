@@ -7,13 +7,13 @@ import java.nio.ByteOrder;
 import java.util.Calendar;
 import java.util.ArrayList;
 
-public class GpsData {
-	public LatLng mPos;
-	public int mAlt;
-	public Calendar mCalendar;
+class GpsData {
+	LatLng mPos;
+//	private int mAlt;
+	Calendar mCalendar;
 
-	public static ArrayList<GpsData> getGpsData(byte[] gpsBytes, int step) {
-		ArrayList<GpsData> gpsDataList = new ArrayList<GpsData>();
+	static ArrayList<GpsData> getGpsData(byte[] gpsBytes, int step) {
+		ArrayList<GpsData> gpsDataList = new ArrayList<>();
 		ByteBuffer bb = ByteBuffer.wrap(gpsBytes);
 		bb.order(ByteOrder.LITTLE_ENDIAN);
 		int count = 0;
@@ -22,13 +22,13 @@ public class GpsData {
 			int t_date = bb.getInt();
 			int t_lat = bb.getInt();
 			int t_lon = bb.getInt();
-			short t_alt = bb.getShort();
+			/*short t_alt = */bb.getShort();
 
 			if (count++ % step == 0) {
 				GpsData gpsData = new GpsData();
 	
 				gpsData.mPos = new LatLng(t_lat / 10000000.0, t_lon / 10000000.0);
-				gpsData.mAlt = t_alt;
+//				gpsData.mAlt = t_alt;
 				gpsData.mCalendar = Calendar.getInstance();
 				int second = t_date & 0x3f;
 				t_date >>= 6;
@@ -49,7 +49,7 @@ public class GpsData {
 		return gpsDataList;
 	}
 
-	public static LatLngBounds getBounds(ArrayList<GpsData> gpsDataList) {
+	static LatLngBounds getBounds(ArrayList<GpsData> gpsDataList) {
 		LatLngBounds.Builder builder = new LatLngBounds.Builder();
 		for (int i = 0; i < gpsDataList.size(); i++)
 			builder.include(gpsDataList.get(i).mPos);

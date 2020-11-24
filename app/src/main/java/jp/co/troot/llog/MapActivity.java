@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.Display;
@@ -62,7 +63,7 @@ import java.util.Random;
 
 public class MapActivity extends MyActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
-    private Map<Marker, Integer> mPhotoMarkerMap = new HashMap<Marker, Integer>();
+    private Map<Marker, Integer> mPhotoMarkerMap = new HashMap<>();
     private LatLng mSearchCenter;
     private Circle mSearchCircle;
     private boolean mSearchFlag;
@@ -288,7 +289,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
                 public void onMapLongClick(LatLng latLng) {
                     Intent intent = new Intent(
                             "android.intent.action.VIEW",
-                            Uri.parse(String.format("google.streetview:cbll=%f,%f&cbp=1,0,,0,1", latLng.latitude, latLng.longitude)));
+                            Uri.parse(String.format(Locale.US,"google.streetview:cbll=%f,%f&cbp=1,0,,0,1", latLng.latitude, latLng.longitude)));
                     startActivity(intent);
                 }
             });
@@ -300,7 +301,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
                     public void onClick(View v) {
                         try {
                             Database db = new Database();
-                            String sql = String.format("SELECT gl_date FROM t_gps_logger WHERE gl_seq_no=%d", gpsSeqNo);
+                            String sql = String.format(Locale.US,"SELECT gl_date FROM t_gps_logger WHERE gl_seq_no=%d", gpsSeqNo);
                             ResultSet rs = db.query(sql);
                             if (rs.next()) {
                                 Intent intent = new Intent(MapActivity.this, MainActivity.class);
@@ -323,7 +324,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
     private ArrayList<GpsData> setPolyline(Database db, int seqNo) throws Exception {
         ArrayList<GpsData> gpsDataList = null;
 
-        String sql = String.format("SELECT gl_point_data FROM t_gps_logger WHERE gl_seq_no=%d", seqNo);
+        String sql = String.format(Locale.US,"SELECT gl_point_data FROM t_gps_logger WHERE gl_seq_no=%d", seqNo);
         ResultSet rs = db.query(sql);
         if (rs.next()) {
             gpsDataList = GpsData.getGpsData(rs.getBytes("gl_point_data"), 1);
@@ -336,10 +337,14 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
             mMap.addPolyline(po);
             LatLngBounds bounds = GpsData.getBounds(gpsDataList);
             WindowManager wm = (WindowManager)getSystemService(WINDOW_SERVICE);
-            Display disp = wm.getDefaultDisplay();
-            Point size = new Point();
-            disp.getSize(size);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, size.x, size.y - 80, 20));
+            if (wm != null) {
+                Display disp = wm.getDefaultDisplay();
+                if (disp != null) {
+                    Point size = new Point();
+                    disp.getSize(size);
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, size.x, size.y - 80, 20));
+                }
+            }
         }
 
         return gpsDataList;
@@ -371,13 +376,13 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
             }
         }
 
-        String sql = String.format("SELECT ph_seq_no,ph_datetime,ph_location[0] AS ph_lat,ph_location[1] AS ph_lon FROM t_gps_logger JOIN t_photo ON ph_date=gl_date AND ph_location IS NOT NULL WHERE gl_seq_no=%d ORDER BY ph_seq_no", seqNo);
+        String sql = String.format(Locale.US, "SELECT ph_seq_no,ph_datetime,ph_location[0] AS ph_lat,ph_location[1] AS ph_lon FROM t_gps_logger JOIN t_photo ON ph_date=gl_date AND ph_location IS NOT NULL WHERE gl_seq_no=%d ORDER BY ph_seq_no", seqNo);
         ResultSet rs = db.query(sql);
         while (rs.next()) {
             addPhotoMarker(new LatLng(rs.getDouble("ph_lat"), rs.getDouble("ph_lon")), rs.getInt("ph_seq_no"));
         }
 
-        sql = String.format("SELECT gc_point[0] AS gc_lat,gc_point[1] AS gc_lon,gc_comment FROM t_gps_comment WHERE gc_gps_logger_id=%d ORDER BY gc_seq_no", seqNo);
+        sql = String.format(Locale.US, "SELECT gc_point[0] AS gc_lat,gc_point[1] AS gc_lon,gc_comment FROM t_gps_comment WHERE gc_gps_logger_id=%d ORDER BY gc_seq_no", seqNo);
         rs = db.query(sql);
         while (rs.next()) {
             addCommentMarker(new LatLng(rs.getDouble("gc_lat"), rs.getDouble("gc_lon")), rs.getString("gc_comment"));
@@ -390,8 +395,8 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
 
         MarkerOptions options = new MarkerOptions();
         options.position(pos);
-        options.title(String.format("%02d:%02d:%02d", time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE), time.get(Calendar.SECOND)));
-        options.icon(getMarker(String.format("marker_kilo/marker%d.png", kilo)));
+        options.title(String.format(Locale.US, "%02d:%02d:%02d", time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE), time.get(Calendar.SECOND)));
+        options.icon(getMarker(String.format(Locale.US, "marker_kilo/marker%d.png", kilo)));
         mMap.addMarker(options);
     }
 
@@ -400,7 +405,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
         options.position(pos);
         NumberFormat format = NumberFormat.getNumberInstance();
         options.title(format.format((int)distance) + "m");
-        options.icon(getMarker(String.format("marker_hour/hour%d.png", hour)));
+        options.icon(getMarker(String.format(Locale.US, "marker_hour/hour%d.png", hour)));
         mMap.addMarker(options);
     }
 
@@ -420,7 +425,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
     }
 
     private void setPhotoMarker(Database db, int seqNo) throws Exception {
-        String sql = String.format("SELECT ph_datetime,ph_location[0] AS ph_lat,ph_location[1] AS ph_lon FROM t_photo WHERE ph_seq_no=%d", seqNo);
+        String sql = String.format(Locale.US, "SELECT ph_datetime,ph_location[0] AS ph_lat,ph_location[1] AS ph_lon FROM t_photo WHERE ph_seq_no=%d", seqNo);
         ResultSet rs = db.query(sql);
         if (rs.next()) {
             LatLng latLng = new LatLng(rs.getFloat("ph_lat"), rs.getFloat("ph_lon"));
@@ -435,7 +440,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
     }
 
     private void setKeitaiGpsMarker(Database db, int seqNo) throws Exception {
-        String sql = String.format("SELECT kg_datetime,kg_point[0] AS kg_lat,kg_point[1] AS kg_lon FROM t_keitai_gps WHERE kg_seq_no=%d", seqNo);
+        String sql = String.format(Locale.US, "SELECT kg_datetime,kg_point[0] AS kg_lat,kg_point[1] AS kg_lon FROM t_keitai_gps WHERE kg_seq_no=%d", seqNo);
         ResultSet rs = db.query(sql);
         if (rs.next()) {
             LatLng latLng = new LatLng(rs.getFloat("kg_lat"), rs.getFloat("kg_lon"));
@@ -491,7 +496,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
 
         try {
             Database db = new Database();
-            String sql = String.format("SELECT ph_seq_no, ph_location[0] AS lat, ph_location[1] AS lon FROM t_photo WHERE circle '((%.9g, %.9g), 1)' @> point(ph_location[0] + (ph_location[0] - %.9g) / %.9g, ph_location[1] + (ph_location[1] - %.9g) / %.9g) ORDER BY ph_datetime", centerLatLng.latitude, centerLatLng.longitude, centerLatLng.latitude, dLat, centerLatLng.longitude, dLon);
+            String sql = String.format(Locale.US, "SELECT ph_seq_no, ph_location[0] AS lat, ph_location[1] AS lon FROM t_photo WHERE circle '((%.9g, %.9g), 1)' @> point(ph_location[0] + (ph_location[0] - %.9g) / %.9g, ph_location[1] + (ph_location[1] - %.9g) / %.9g) ORDER BY ph_datetime", centerLatLng.latitude, centerLatLng.longitude, centerLatLng.latitude, dLat, centerLatLng.longitude, dLon);
             ResultSet rs = db.query(sql);
             while (rs.next()) {
                 MarkerOptions options = new MarkerOptions();
@@ -508,25 +513,29 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
     private void searchGpsLogger(LatLng centerLatLng, double distance) {
         ArrayAdapter<GpsListItem> adapter = new ArrayAdapter<GpsListItem>(this, android.R.layout.simple_spinner_item) {
             @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
+            public @NonNull View getView(int position, View convertView, @NonNull ViewGroup parent) {
                 TextView view = (TextView)super.getView(position, convertView, parent);
                 GpsListItem gpsListItem = getItem(position);
-                view.setText(gpsListItem.mItemName);
+                if (gpsListItem != null) {
+                    view.setText(gpsListItem.mItemName);
+                }
                 return view;
             }
 
             @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            public @NonNull View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
                 CheckedTextView view = (CheckedTextView)super.getDropDownView(position, convertView, parent);
                 GpsListItem gpsListItem = getItem(position);
-                view.setText(gpsListItem.mItemName);
+                if (gpsListItem != null) {
+                    view.setText(gpsListItem.mItemName);
+                }
                 return view;
             }
         };
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         try {
-            URL url = new URL(String.format("http://inet.troot.co.jp/llog/gl_search_log.php?circle_lat=%.9g&circle_lon=%.9g&circle_r=%.9g",
+            URL url = new URL(String.format(Locale.US, "http://inet.troot.co.jp/llog/gl_search_log.php?circle_lat=%.9g&circle_lon=%.9g&circle_r=%.9g",
                     centerLatLng.latitude, centerLatLng.longitude, distance));
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
             connection.setDoInput(true);
@@ -539,7 +548,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
 
                 int count = 0;
                 Database db = new Database();
-                String sql = String.format("SELECT gl_seq_no, gl_date FROM t_gps_logger WHERE gl_seq_no IN (%s) ORDER BY gl_start_time", result);
+                String sql = String.format(Locale.US, "SELECT gl_seq_no, gl_date FROM t_gps_logger WHERE gl_seq_no IN (%s) ORDER BY gl_start_time", result);
                 ResultSet rs = db.query(sql);
                 while (rs.next()) {
                     GpsListItem gpsListItem = new GpsListItem();
@@ -550,8 +559,8 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
                 }
 
                 if (count < 20) {
-                    mPolyline = new ArrayList<Polyline>();
-                    sql = String.format("SELECT gl_point_data FROM t_gps_logger WHERE gl_seq_no IN (%s) ORDER BY gl_start_time", result);
+                    mPolyline = new ArrayList<>();
+                    sql = String.format(Locale.US, "SELECT gl_point_data FROM t_gps_logger WHERE gl_seq_no IN (%s) ORDER BY gl_start_time", result);
                     rs = db.query(sql);
                     while (rs.next()) {
                         Random rnd = new Random();
@@ -574,7 +583,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
 
         GpsListItem gpsListItem = new GpsListItem();
         gpsListItem.mSeqNo = 0;
-        gpsListItem.mItemName = String.format("%d 件", adapter.getCount());
+        gpsListItem.mItemName = String.format(Locale.US, "%d 件", adapter.getCount());
         adapter.insert(gpsListItem, 0);
 
         mSpinner = new Spinner(this);
@@ -614,7 +623,7 @@ public class MapActivity extends MyActivity implements OnMapReadyCallback {
 
         try {
             Database db = new Database();
-            String sql = String.format("SELECT kg_datetime,kg_point[0] AS kg_lat,kg_point[1] AS kg_lon FROM t_keitai_gps WHERE circle '((%.9g, %.9g), 1)' @> point(kg_point[0] + (kg_point[0] - %.9g) / %.9g, kg_point[1] + (kg_point[1] - %.9g) / %.9g) ORDER BY kg_datetime", centerLatLng.latitude, centerLatLng.longitude, centerLatLng.latitude, d_lat, centerLatLng.longitude, d_lon);
+            String sql = String.format(Locale.US, "SELECT kg_datetime,kg_point[0] AS kg_lat,kg_point[1] AS kg_lon FROM t_keitai_gps WHERE circle '((%.9g, %.9g), 1)' @> point(kg_point[0] + (kg_point[0] - %.9g) / %.9g, kg_point[1] + (kg_point[1] - %.9g) / %.9g) ORDER BY kg_datetime", centerLatLng.latitude, centerLatLng.longitude, centerLatLng.latitude, d_lat, centerLatLng.longitude, d_lon);
             ResultSet rs = db.query(sql);
             while (rs.next()) {
                 LatLng latLng = new LatLng(rs.getFloat("kg_lat"), rs.getFloat("kg_lon"));

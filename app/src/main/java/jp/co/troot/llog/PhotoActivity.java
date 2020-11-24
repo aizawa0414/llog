@@ -49,7 +49,7 @@ public class PhotoActivity extends MyActivity {
 
             int seqNo = intent.getIntExtra("SeqNo", 0);
             if (seqNo != 0) {
-                sql = String.format("SELECT ph_date FROM t_photo WHERE ph_seq_no=%d", seqNo);
+                sql = String.format(Locale.US, "SELECT ph_date FROM t_photo WHERE ph_seq_no=%d", seqNo);
                 ResultSet rs = db.query(sql);
                 rs.next();
                 date = Calendar.getInstance();
@@ -58,7 +58,7 @@ public class PhotoActivity extends MyActivity {
                 date = (Calendar)intent.getSerializableExtra("Date");
 
             int counter = 0;
-            sql = String.format("SELECT ph_seq_no,ph_datetime,ph_folder_name,ph_file_name,ph_location IS NOT NULL AS ph_location_flag FROM t_photo WHERE ph_date=%s ORDER BY ph_datetime", Database.sqlDate(date.getTime()));
+            sql = String.format(Locale.US, "SELECT ph_seq_no,ph_datetime,ph_folder_name,ph_file_name,ph_location IS NOT NULL AS ph_location_flag FROM t_photo WHERE ph_date=%s ORDER BY ph_datetime", Database.sqlDate(date.getTime()));
             ResultSet rs = db.query(sql);
             while (rs.next()) {
                 PhotoData photoData = new PhotoData();
@@ -172,7 +172,7 @@ public class PhotoActivity extends MyActivity {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy'/'MM'/'dd' 'HH':'mm", Locale.JAPANESE);
         TextView view = (TextView)findViewById(R.id.txtPhotoDate);
-        view.setText(String.format("[%d/%d] ", position + 1, mPhotoList.size()) + sdf.format(photoData.mDate));
+        view.setText(String.format(Locale.US, "[%d/%d] ", position + 1, mPhotoList.size()) + sdf.format(photoData.mDate));
 
         Button buttonPhotoMap = (Button)findViewById(R.id.buttonMapMap);
         buttonPhotoMap.setEnabled(photoData.mLocationFlag);
@@ -189,41 +189,41 @@ public class PhotoActivity extends MyActivity {
 
             String model = exifDirectory.getString(ExifIFD0Directory.TAG_MODEL);
             if (model != null)
-                messages.add(String.format("機種名　　　　：%s", model));
+                messages.add(String.format(Locale.US, "機種名　　　　：%s", model));
 
             Float shutter_speed = exifSubIFDDirectory.getFloatObject(ExifSubIFDDirectory.TAG_EXPOSURE_TIME);
             if (shutter_speed != null)
-                messages.add(String.format("シャッター速度：1/%.0f 秒", 1 / shutter_speed));
+                messages.add(String.format(Locale.US, "シャッター速度：1/%.0f 秒", 1 / shutter_speed));
             else {
                 shutter_speed = exifSubIFDDirectory.getFloatObject(ExifSubIFDDirectory.TAG_SHUTTER_SPEED);
                 if (shutter_speed != null)
-                    messages.add(String.format("シャッター速度：1/%.0f 秒", Math.pow(2, shutter_speed)));
+                    messages.add(String.format(Locale.US, "シャッター速度：1/%.0f 秒", Math.pow(2, shutter_speed)));
             }
 
             Float f_number = exifSubIFDDirectory.getFloatObject(ExifSubIFDDirectory.TAG_APERTURE);
             if (f_number != null)
-                messages.add(String.format("絞り　　　　　：F%.1f", Math.sqrt(Math.pow(2, f_number))));
+                messages.add(String.format(Locale.US, "絞り　　　　　：F%.1f", Math.sqrt(Math.pow(2, f_number))));
             else {
                 f_number = exifSubIFDDirectory.getFloatObject(ExifSubIFDDirectory.TAG_FNUMBER);
                 if (f_number != null)
-                    messages.add(String.format("絞り　　　　　：F%.1f", f_number));
+                    messages.add(String.format(Locale.US, "絞り　　　　　：F%.1f", f_number));
             }
 
             Integer iso_equivalent = exifSubIFDDirectory.getInteger(ExifSubIFDDirectory.TAG_ISO_EQUIVALENT);
             if (iso_equivalent != null)
-                messages.add(String.format("ＩＳＯ感度　　：%d", iso_equivalent));
+                messages.add(String.format(Locale.US, "ＩＳＯ感度　　：%d", iso_equivalent));
 
             Float exposure_bias = exifSubIFDDirectory.getFloatObject(ExifSubIFDDirectory.TAG_EXPOSURE_BIAS);
             if (exposure_bias != null)
-                messages.add(String.format("露出補正　　　：%.1f EV", exposure_bias));
+                messages.add(String.format(Locale.US, "露出補正　　　：%.1f EV", exposure_bias));
 
             Float focal_length = exifSubIFDDirectory.getFloatObject(ExifSubIFDDirectory.TAG_FOCAL_LENGTH);
             if (focal_length != null)
-                messages.add(String.format("焦点距離　　　：%.1f mm", focal_length));
+                messages.add(String.format(Locale.US, "焦点距離　　　：%.1f mm", focal_length));
 
             new AlertDialog.Builder(PhotoActivity.this)
                     .setTitle("写真情報")
-                    .setMessage(MyUtils.join(messages.toArray(new String[messages.size()]), "\n"))
+                    .setMessage(MyUtils.join(messages.toArray(new String[0]), "\n"))
                     .setPositiveButton("OK", null)
                     .show();
         } catch (Exception e) {

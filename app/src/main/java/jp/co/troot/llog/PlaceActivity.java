@@ -34,6 +34,7 @@ import java.sql.Array;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -160,53 +161,53 @@ public class PlaceActivity extends MyActivity implements LocationListener, OnMap
                         if (marker.equals(mCurrentLocation)) {
                             ArrayList<String> messages = new ArrayList<String>();
                             messages.add("住所");
-                            messages.add(String.format("　%s", mAddress.getString("address")));
+                            messages.add(String.format(Locale.US, "　%s", mAddress.getString("address")));
 
                             messages.add("");
                             messages.add("自宅");
-                            messages.add(String.format("　距離：%s", mAddress.getString("home_distance")));
-                            messages.add(String.format("　方向：%s", mAddress.getString("home_dir")));
+                            messages.add(String.format(Locale.US, "　距離：%s", mAddress.getString("home_distance")));
+                            messages.add(String.format(Locale.US, "　方向：%s", mAddress.getString("home_dir")));
 
                             messages.add("");
                             messages.add("最寄駅");
                             JSONArray stations = mAddress.getJSONArray("stations");
                             for (int i = 0; i < stations.length(); i++) {
                                 JSONObject station = stations.getJSONObject(i);
-                                messages.add(String.format("　%s.%s %s（%sに%s先・%s）",
+                                messages.add(String.format(Locale.US, "　%s.%s %s（%sに%s先・%s）",
                                         i + 1,
                                         station.getString("line"),
                                         station.getString("name"),
                                         station.getString("direction"),
-                                        station.getInt("distance") < 1000 ? String.format("%dm", station.getInt("distance")) : station.getString("distanceKm"),
+                                        station.getInt("distance") < 1000 ? String.format(Locale.US, "%dm", station.getInt("distance")) : station.getString("distanceKm"),
                                         station.getString("traveltime")
                                 ));
                             }
 
                             new AlertDialog.Builder(PlaceActivity.this)
                                     .setTitle("現在地情報")
-                                    .setMessage(MyUtils.join(messages.toArray(new String[messages.size()]), "\n"))
+                                    .setMessage(MyUtils.join(messages.toArray(new String[0]), "\n"))
                                     .setNegativeButton("閉じる", null)
                                     .show();
                         } else {
                             final Integer seqNo = mMarkerMap.get(marker.getId());
                             Database db = new Database();
 
-                            String sql = String.format("SELECT pl_name, pl_address, pl_comment, pl_add_info FROM t_place WHERE pl_seq_no = %d", seqNo);
+                            String sql = String.format(Locale.US, "SELECT pl_name, pl_address, pl_comment, pl_add_info FROM t_place WHERE pl_seq_no = %d", seqNo);
                             ResultSet rs = db.query(sql);
                             if (rs.next()) {
                                 ArrayList<String> messages = new ArrayList<String>();
 
                                 String name = rs.getString("pl_name");
                                 if (name != null)
-                                    messages.add(String.format("名称：%s", name));
+                                    messages.add(String.format(Locale.US, "名称：%s", name));
 
                                 String address = rs.getString("pl_address");
                                 if (address != null)
-                                    messages.add(String.format("場所：%s", address));
+                                    messages.add(String.format(Locale.US, "場所：%s", address));
 
                                 String comment = rs.getString("pl_comment");
                                 if (comment != null)
-                                    messages.add(String.format("コメント：%s", comment));
+                                    messages.add(String.format(Locale.US, "コメント：%s", comment));
 
                                 Array addInfo = rs.getArray("pl_add_info");
                                 if (addInfo != null) {
@@ -214,21 +215,21 @@ public class PlaceActivity extends MyActivity implements LocationListener, OnMap
                                     switch (mKind) {
                                         case 1:
                                             if (!addInfoStr[0].equals(""))
-                                                messages.add(String.format("広さ：%s ㎡", addInfoStr[0]));
+                                                messages.add(String.format(Locale.US, "広さ：%s ㎡", addInfoStr[0]));
 
-                                            messages.add(String.format("ゴミ箱：%s", addInfoStr[1].equals("t") ? "有り" : "無し"));
+                                            messages.add(String.format(Locale.US, "ゴミ箱：%s", addInfoStr[1].equals("t") ? "有り" : "無し"));
 
-                                            messages.add(String.format("トイレ：%s", addInfoStr[2].equals("t") ? "有り" : "無し"));
+                                            messages.add(String.format(Locale.US, "トイレ：%s", addInfoStr[2].equals("t") ? "有り" : "無し"));
                                             break;
                                         case 3:
-                                            messages.add(String.format("宗派：%s", addInfoStr[0]));
+                                            messages.add(String.format(Locale.US, "宗派：%s", addInfoStr[0]));
                                             break;
                                     }
                                 }
 
                                 AlertDialog.Builder dialog = new AlertDialog.Builder(PlaceActivity.this);
                                 dialog.setTitle("情報");
-                                dialog.setMessage(MyUtils.join(messages.toArray(new String[messages.size()]), "\n"));
+                                dialog.setMessage(MyUtils.join(messages.toArray(new String[0]), "\n"));
                                 dialog.setNegativeButton("閉じる", null);
                                 dialog.setPositiveButton(
                                         "訪問",
@@ -237,7 +238,7 @@ public class PlaceActivity extends MyActivity implements LocationListener, OnMap
                                             public void onClick(DialogInterface dialog, int which) {
                                                 try {
                                                     Database db = new Database();
-                                                    String sql = String.format("SELECT pl_visited FROM t_place WHERE pl_seq_no = %d", seqNo);
+                                                    String sql = String.format(Locale.US, "SELECT pl_visited FROM t_place WHERE pl_seq_no = %d", seqNo);
                                                     ResultSet rs = db.query(sql);
                                                     if (rs.next()) {
                                                         String date;
@@ -245,7 +246,7 @@ public class PlaceActivity extends MyActivity implements LocationListener, OnMap
                                                             date = "current_date";
                                                         else
                                                             date = "null";
-                                                        sql = String.format("UPDATE t_place SET pl_visited = %s WHERE pl_seq_no = %d", date, seqNo);
+                                                        sql = String.format(Locale.US, "UPDATE t_place SET pl_visited = %s WHERE pl_seq_no = %d", date, seqNo);
                                                         db.exec(sql);
 
                                                         setMarkers();
@@ -284,7 +285,7 @@ public class PlaceActivity extends MyActivity implements LocationListener, OnMap
                 public void onMapLongClick(LatLng latLng) {
                     Intent intent = new Intent(
                             "android.intent.action.VIEW",
-                            Uri.parse(String.format("google.streetview:cbll=%f,%f&cbp=1,0,,0,1", latLng.latitude, latLng.longitude)));
+                            Uri.parse(String.format(Locale.US, "google.streetview:cbll=%f,%f&cbp=1,0,,0,1", latLng.latitude, latLng.longitude)));
                     startActivity(intent);
                 }
             });
@@ -343,7 +344,7 @@ public class PlaceActivity extends MyActivity implements LocationListener, OnMap
 
         Database db = new Database();
 
-        String sql = String.format("SELECT pl_seq_no, pl_name, pl_location[0] AS pl_lat, pl_location[1] AS pl_lon, pl_visited FROM t_place WHERE pl_kind = %d AND pl_location IS NOT NULL", mKind);
+        String sql = String.format(Locale.US, "SELECT pl_seq_no, pl_name, pl_location[0] AS pl_lat, pl_location[1] AS pl_lon, pl_visited FROM t_place WHERE pl_kind = %d AND pl_location IS NOT NULL", mKind);
         ResultSet rs = db.query(sql);
         while (rs.next()) {
             MarkerOptions options = new MarkerOptions();

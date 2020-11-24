@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class UploadActivity extends MyActivity {
     private List<String> mPhotoFiles = new ArrayList<String>();
@@ -38,22 +39,22 @@ public class UploadActivity extends MyActivity {
 
         getPhotoFiles();
         TextView textView = (TextView)findViewById(R.id.textViewPhotoFileNum2);
-        textView.setText(String.format("：%d 件", mPhotoFiles.size()));
+        textView.setText(String.format(Locale.US, "：%d 件", mPhotoFiles.size()));
 
         getGpsFiles("/MyTracks/gpx");
         getGpsFiles("/com.kamoland/ytlog");
         textView = (TextView)findViewById(R.id.textViewGpsFileNum2);
-        textView.setText(String.format("：%d 件", mGpsFiles.size()));
+        textView.setText(String.format(Locale.US, "：%d 件", mGpsFiles.size()));
 
         new GetUploadFiles(new Runnable() {
             @Override
             public void run() {
                 TextView textView = (TextView)findViewById(R.id.textViewUploadPhotoNum2);
-                textView.setText(String.format("：%d 件", mUploadPhotoFiles.size()));
+                textView.setText(String.format(Locale.US, "：%d 件", mUploadPhotoFiles.size()));
                 textView.setTextColor(mUploadPhotoFiles.size() == 0 ? Color.BLACK : Color.RED);
 
                 textView = (TextView)findViewById(R.id.textViewUploadGpsNum2);
-                textView.setText(String.format("：%d 件", mUploadGpsFiles.size()));
+                textView.setText(String.format(Locale.US, "：%d 件", mUploadGpsFiles.size()));
                 textView.setTextColor(mUploadGpsFiles.size() == 0 ? Color.BLACK : Color.RED);
 
                 if (mUploadPhotoFiles.size() + mUploadGpsFiles.size() > 0) {
@@ -87,8 +88,19 @@ public class UploadActivity extends MyActivity {
         final File[] filelist = dir.listFiles();
         if (filelist != null) {
             for (File file: filelist) {
-                if (getSuffix(file.getName()).equals("jpg")) {
-                    mPhotoFiles.add(file.getAbsolutePath());
+                if (file.isDirectory()) {
+                    if (file.getName().substring(0, 4).equals("IMG_")) {
+                        File[] filelist2 = new File(cameraDir + "/" + file.getName()).listFiles();
+                        for (File file2: filelist2) {
+                            if (file2.getName().substring(file2.getName().length() - 10).equals("_COVER.jpg")) {
+                                mPhotoFiles.add(file2.getAbsolutePath());
+                            }
+                        }
+                    }
+                } else if (file.isFile()) {
+                    if (getSuffix(file.getName()).equals("jpg")) {
+                        mPhotoFiles.add(file.getAbsolutePath());
+                    }
                 }
             }
         }
@@ -121,7 +133,7 @@ public class UploadActivity extends MyActivity {
     public class GetUploadFiles extends AsyncTask<String, Integer, Long> {
         Runnable mRunnable;
 
-        public GetUploadFiles(Runnable runnable) {
+        GetUploadFiles(Runnable runnable) {
             mRunnable = runnable;
         }
 
@@ -190,7 +202,7 @@ public class UploadActivity extends MyActivity {
     public class UploadFiles extends AsyncTask<String, Integer, Long> {
         Runnable mRunnable;
 
-        public UploadFiles(Runnable runnable) {
+        UploadFiles(Runnable runnable) {
             mRunnable = runnable;
         }
 

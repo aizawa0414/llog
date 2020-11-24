@@ -3,6 +3,7 @@ package jp.co.troot.llog;
 import java.sql.ResultSet;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -31,7 +32,7 @@ public class PhotoZoomActivity extends MyActivity {
 
 			Database db = new Database();
 			int seqNo = (Integer)intent.getSerializableExtra("PhotoSeqNo");
-			String sql = String.format("SELECT ph_date,ph_folder_name,ph_file_name FROM t_photo WHERE ph_seq_no=%d", seqNo);
+			String sql = String.format(Locale.US, "SELECT ph_date,ph_folder_name,ph_file_name FROM t_photo WHERE ph_seq_no=%d", seqNo);
 			ResultSet rs = db.query(sql);
 			if (rs.next()) {
 				Date date = rs.getDate("ph_date");
@@ -42,7 +43,7 @@ public class PhotoZoomActivity extends MyActivity {
 				c.setTime(date);
 				int year = c.get(Calendar.YEAR);
 
-				String url = String.format("http://inet.troot.co.jp/photo_org/%d/%s/%s", year, folderName, fileName);
+				String url = String.format(Locale.US, "http://inet.troot.co.jp/photo_org/%d/%s/%s", year, folderName, fileName);
 				webView.loadUrl(url);
 			}
 		} catch (Exception e) {

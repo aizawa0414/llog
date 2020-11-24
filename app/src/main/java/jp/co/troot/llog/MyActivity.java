@@ -8,7 +8,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.provider.Settings;
 
-public class MyActivity extends Activity {
+abstract public class MyActivity extends Activity {
 	static private boolean mForeground;
 	static private int mRotation;
 
@@ -42,11 +42,13 @@ public class MyActivity extends Activity {
 
 	private boolean checkRunningAppProcess() {
 		ActivityManager am = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
-		List<RunningAppProcessInfo> processInfoList = am.getRunningAppProcesses();
-		for (RunningAppProcessInfo info : processInfoList) {
-			if (info.processName.equals(getPackageName())) {
-				if (info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-					return true;
+		if (am != null) {
+			List<RunningAppProcessInfo> processInfoList = am.getRunningAppProcesses();
+			for (RunningAppProcessInfo info : processInfoList) {
+				if (info.processName.equals(getPackageName())) {
+					if (info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+						return true;
+					}
 				}
 			}
 		}
